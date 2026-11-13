@@ -32,6 +32,9 @@ try {
     record(`${role.code} direct module`, correctPath && active.includes(route.module) && screen, `path=${new URL(page.url()).pathname}; active=${active}; screen=${screen}; implemented=${route.implemented}`);
     await page.reload({ waitUntil: 'commit' });
     record(`${role.code} refresh`, new URL(page.url()).pathname === route.path);
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileFits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2);
+    record(`${role.code} mobile layout`, mobileFits, `viewport=${await page.evaluate(() => `${innerWidth}x${innerHeight}`)}; documentWidth=${await page.evaluate(() => document.documentElement.scrollWidth)}`);
     await page.close();
   }
 

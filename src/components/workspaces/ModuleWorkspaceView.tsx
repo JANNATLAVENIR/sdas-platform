@@ -1,51 +1,113 @@
-import React, { useMemo, useState } from 'react';
-import { Search, Filter, ArrowUpRight, ClipboardList, MapPin, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowUpRight, ClipboardList, Download, Filter, MapPin, Plus, Search, ShieldCheck, X } from 'lucide-react';
 import type { ModuleRoute } from '../../routing/routeRegistry';
 
 interface Props { route: ModuleRoute; roleName: string; scope: string; }
+type RecordRow = { id: string; title: string; area: string; status: string; owner: string };
 
-const rowsFor = (route: ModuleRoute) => {
+const recordsFor = (route: ModuleRoute, roleName: string): RecordRow[] => {
   const slug = route.slug;
   if (/map|gis|boundary|coordinate|street|footprint|layer|area|coverage/.test(slug)) return [
-    ['MAP-01', route.module, 'Hodan', 'Review required'], ['MAP-02', route.module, 'Wadajir', 'In progress'], ['MAP-03', route.module, 'Kaaraan', 'Updated recently']
+    { id: 'MAP-01', title: `${route.module} · Hodan`, area: 'Hodan', status: 'Review required', owner: 'GIS team' },
+    { id: 'MAP-02', title: `${route.module} · Wadajir`, area: 'Wadajir', status: 'In progress', owner: 'Regional team' },
+    { id: 'MAP-03', title: `${route.module} · Kaaraan`, area: 'Kaaraan', status: 'Updated recently', owner: 'District team' }
   ];
   if (/audit|log|history|compliance|security|activity/.test(slug)) return [
-    ['AUD-9041', 'address.designated_official', 'R03 Director General', 'Read only'], ['AUD-9040', 'address.verified', 'R11 Address Verifier', 'Read only'], ['AUD-9039', 'address.approved', 'R06 District Administrator', 'Read only']
+    { id: 'AUD-9041', title: 'address.designated_official', area: 'National office', status: 'Read only', owner: 'R03 Director General' },
+    { id: 'AUD-9040', title: 'address.verified', area: 'Wadajir District', status: 'Read only', owner: 'R11 Address Verifier' },
+    { id: 'AUD-9039', title: 'address.approved', area: 'Kaaraan District', status: 'Read only', owner: 'R06 District Administrator' }
   ];
   if (/api|endpoint|credential|rate|integration|error/.test(slug)) return [
-    ['API-01', 'Address lookup', 'Enabled scope', 'Demo data'], ['API-02', 'Address validation', 'Enabled scope', 'Demo data'], ['API-03', 'Geocoding', 'Restricted scope', 'Demo data']
+    { id: 'API-01', title: 'Address lookup', area: 'Authorized scope', status: 'Enabled', owner: 'Institutional client' },
+    { id: 'API-02', title: 'Address validation', area: 'Authorized scope', status: 'Enabled', owner: 'Institutional client' },
+    { id: 'API-03', title: 'Geocoding', area: 'Restricted scope', status: 'Review required', owner: 'Institutional client' }
   ];
   if (/staff|user|team|surveyor|assignment|task|field|survey/.test(slug)) return [
-    ['TASK-104', 'Review Hodan address batch', 'Assigned team', 'In progress'], ['TASK-105', 'Check field submission', 'Survey team', 'Pending'], ['TASK-106', 'Review correction request', 'District office', 'Needs review']
+    { id: 'TASK-104', title: 'Review Hodan address batch', area: 'Assigned team', status: 'In progress', owner: 'Field team A' },
+    { id: 'TASK-105', title: 'Check field submission', area: 'Survey team', status: 'Pending', owner: 'Field team B' },
+    { id: 'TASK-106', title: 'Review correction request', area: 'District office', status: 'Needs review', owner: 'Address team' }
   ];
   if (/request|application|approval|verification|correction|complaint|queue|address|registry|duplicate|quality/.test(slug)) return [
-    ['APP-2026-4409', 'SDAS-MOG-7482', 'Hodan District', 'Awaiting review'], ['APP-2026-4410', 'SDAS-MOG-3091', 'Wadajir District', 'Verified'], ['APP-2026-4411', 'SDAS-MOG-1824', 'Kaaraan District', 'Correction requested']
+    { id: 'APP-4409', title: 'SDAS-MOG-7482', area: 'Hodan District', status: 'Awaiting review', owner: 'District office' },
+    { id: 'APP-4410', title: 'SDAS-MOG-3091', area: 'Wadajir District', status: 'Verified', owner: 'Verification team' },
+    { id: 'APP-4411', title: 'SDAS-MOG-1824', area: 'Kaaraan District', status: 'Correction requested', owner: 'Address team' }
   ];
-  return [['RPT-01', 'Operational overview', route.module, 'Available'], ['RPT-02', 'Current period summary', route.module, 'Available'], ['RPT-03', 'Recent activity', route.module, 'Available']];
+  return [
+    { id: 'RPT-01', title: `${route.module} · Current period`, area: route.module, status: 'Available', owner: roleName },
+    { id: 'RPT-02', title: 'Operational summary', area: route.module, status: 'Available', owner: 'SDAS Operations' },
+    { id: 'RPT-03', title: 'Recent activity', area: route.module, status: 'Available', owner: 'SDAS Operations' }
+  ];
 };
 
+const primaryActionFor = (route: ModuleRoute) => /audit|log|history|security/.test(route.slug) ? 'Export report' : /report|statistics|performance/.test(route.slug) ? 'Generate report' : /staff|user|team|assignment/.test(route.slug) ? 'New assignment' : /api|credential|key/.test(route.slug) ? 'Request credential' : /request|application|address|correction/.test(route.slug) ? 'New request' : 'Create item';
+
 export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope }) => {
-  const rows = useMemo(() => rowsFor(route), [route]);
+  const [records, setRecords] = useState(() => recordsFor(route, roleName));
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selected, setSelected] = useState<RecordRow | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [draftTitle, setDraftTitle] = useState('');
   const [notice, setNotice] = useState('');
-  const filtered = rows.filter(row => row.join(' ').toLowerCase().includes(query.toLowerCase()));
-  const columns = /audit|log|history|compliance/.test(route.slug) ? ['Event ID', 'Event', 'Actor', 'Access'] : ['Reference', 'Item', 'Area / Type', 'Status'];
+  const readOnly = /audit|log|history|security/.test(route.slug);
+  const filtered = useMemo(() => records.filter(row =>
+    row.status.toLowerCase().includes(statusFilter === 'all' ? '' : statusFilter) &&
+    `${row.id} ${row.title} ${row.area} ${row.status} ${row.owner}`.toLowerCase().includes(query.toLowerCase())
+  ), [records, query, statusFilter]);
+  const statuses = Array.from(new Set(records.map(record => record.status)));
+
+  useEffect(() => {
+    setRecords(recordsFor(route, roleName));
+    setQuery('');
+    setStatusFilter('all');
+    setSelected(null);
+    setIsFormOpen(false);
+    setNotice('');
+  }, [route.slug, roleName]);
+
+  const exportDemoCsv = () => {
+    const csv = [['Reference', 'Item', 'Area', 'Status', 'Owner'], ...filtered.map(row => [row.id, row.title, row.area, row.status, row.owner])]
+      .map(row => row.map(value => `"${value.replaceAll('"', '""')}"`).join(',')).join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    link.download = `${route.slug}-demo.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setNotice('Demo CSV exported. It contains sample records only.');
+  };
+
+  const submitDemo = (event: React.FormEvent) => {
+    event.preventDefault();
+    const title = draftTitle.trim();
+    if (!title) return;
+    setRecords(current => [{ id: `DEMO-${Date.now().toString().slice(-5)}`, title, area: scope, status: 'Draft · demo only', owner: roleName }, ...current]);
+    setDraftTitle('');
+    setIsFormOpen(false);
+    setNotice('Demo item added to this screen only. It was not sent or saved.');
+  };
 
   return <div className="space-y-4" data-module-screen={route.slug}>
-    <section className="bg-white border border-slate-200 rounded-md p-5 sm:p-6">
+    <section className="rounded-md border border-slate-200 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="text-[10px] font-semibold tracking-wider text-amber-800 uppercase">DEMO DATA · UI ONLY</div><h1 className="mt-1 text-xl font-serif font-bold text-slate-900">{route.module}</h1><p className="mt-1 text-xs text-slate-500">{roleName} · {scope}</p><p className="mt-2 max-w-3xl text-sm text-slate-600">{route.description} This screen demonstrates the intended workspace layout; displayed records are fixtures and actions are not submitted.</p></div>
-        <span className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700"><ShieldCheck className="h-3.5 w-3.5"/> Role scoped</span>
+        <div className="min-w-0"><div className="text-[10px] font-semibold uppercase tracking-wider text-amber-800">DEMO DATA · UI ONLY</div><h1 className="mt-1 text-xl font-serif font-bold text-slate-900">{route.module}</h1><p className="mt-1 text-xs text-slate-500">{roleName} · {scope}</p><p className="mt-2 max-w-3xl text-sm text-slate-600">{route.description} This role-scoped screen demonstrates the intended interface. Records are sample data; actions stay in this browser view and are not submitted.</p></div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700"><ShieldCheck aria-hidden="true" className="h-3.5 w-3.5"/> Role scoped</span>
       </div>
     </section>
-    <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      {[['Items in view', String(rows.length), 'Demo records'], ['Needs attention', String(rows.filter(r => /pending|review|correction/i.test(r[3])).length), 'Review queue'], ['Current scope', 'Assigned', scope]].map(([label,value,detail])=><article key={label} className="bg-white border border-slate-200 rounded-md p-4"><div className="text-xs text-slate-500">{label}</div><div className="mt-1 text-xl font-bold tabular-nums text-slate-900">{value}</div><div className="mt-1 text-[11px] text-slate-500">{detail}</div></article>)}
+    <section aria-label="Module summary" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {[[`Items in ${scope}`, String(records.length), 'Demo records'], ['Needs attention', String(records.filter(row => /pending|review|correction/i.test(row.status)).length), 'Sample review queue'], ['Module status', 'Preview', 'No live data']].map(([label, value, detail]) => <article key={label} className="rounded-md border border-slate-200 bg-white p-4"><div className="text-xs text-slate-500">{label}</div><div className="mt-1 text-xl font-bold tabular-nums text-slate-900">{value}</div><div className="mt-1 text-[11px] text-slate-500">{detail}</div></article>)}
     </section>
-    <section className="bg-white border border-slate-200 rounded-md p-4 sm:p-5 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><ClipboardList className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">{route.module} records</h2></div><div className="flex gap-2"><label className="relative"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400"/><input aria-label="Search module records" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search records" className="w-44 rounded border border-slate-300 py-1.5 pl-8 pr-2 text-xs"/></label><button onClick={()=>setNotice('Filters are shown for interface preview only.')} className="inline-flex items-center gap-1 rounded border border-slate-300 px-2.5 py-1.5 text-xs"><Filter className="h-3.5 w-3.5"/>Filters</button></div></div>
-      <div className="overflow-x-auto border border-slate-200 rounded"><table className="w-full min-w-[560px] text-left text-xs"><thead className="bg-slate-50 text-slate-600"><tr>{columns.map(c=><th key={c} className="p-2.5 font-semibold">{c}</th>)}<th className="p-2.5">Action</th></tr></thead><tbody className="divide-y divide-slate-200">{filtered.map(row=><tr key={row[0]}>{row.map((cell,i)=><td key={i} className={`p-2.5 ${i===0?'font-mono font-semibold':''}`}>{i===2&&/map|gis|coordinate/.test(route.slug)&&<MapPin className="mr-1 inline h-3 w-3"/>}{cell}</td>)}<td className="p-2.5"><button onClick={()=>setNotice(`${row[0]} opened in demo preview. No data was changed.`)} className="inline-flex items-center gap-1 text-blue-900 underline">Open <ArrowUpRight className="h-3 w-3"/></button></td></tr>)}{filtered.length===0&&<tr><td className="p-5 text-center text-slate-500" colSpan={5}>No demo records match this search.</td></tr>}</tbody></table></div>
-      {notice&&<div role="status" className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">{notice}</div>}
-      <p className="text-[11px] text-slate-500">Demo interface only. No live records are changed by these controls.</p>
+    <section className="space-y-3 rounded-md border border-slate-200 bg-white p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><ClipboardList aria-hidden="true" className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">{route.module} records</h2></div><div className="flex flex-wrap gap-2">
+        <label className="relative"><span className="sr-only">Search {route.module} records</span><Search aria-hidden="true" className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400"/><input aria-label={`Search ${route.module} records`} value={query} onChange={event => setQuery(event.target.value)} placeholder="Search records" className="w-44 rounded border border-slate-300 py-1.5 pl-8 pr-2 text-xs focus:outline-2 focus:outline-blue-800"/></label>
+        <label className="inline-flex items-center gap-1.5 rounded border border-slate-300 px-2"><Filter aria-hidden="true" className="h-3.5 w-3.5 text-slate-500"/><span className="sr-only">Filter by status</span><select aria-label="Filter by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="bg-transparent py-1.5 text-xs focus:outline-2 focus:outline-blue-800"><option value="all">All statuses</option>{statuses.map(status => <option key={status} value={status.toLowerCase()}>{status}</option>)}</select></label>
+        {readOnly ? <button onClick={exportDemoCsv} className="inline-flex items-center gap-1.5 rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-50"><Download aria-hidden="true" className="h-3.5 w-3.5"/>Export demo</button> : <button onClick={() => setIsFormOpen(true)} className="inline-flex items-center gap-1.5 rounded bg-[#0c243e] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#133860]"><Plus aria-hidden="true" className="h-3.5 w-3.5"/>{primaryActionFor(route)}</button>}
+      </div></div>
+      <div className="overflow-x-auto rounded border border-slate-200"><table className="w-full min-w-[650px] text-left text-xs"><caption className="sr-only">{route.module} sample records for {scope}</caption><thead className="bg-slate-50 text-slate-600"><tr>{['Reference', 'Item', 'Area / scope', 'Status', 'Owner', ''].map(column => <th key={column || 'action'} scope="col" className="p-2.5 font-semibold">{column}</th>)}</tr></thead><tbody className="divide-y divide-slate-200">{filtered.map(row => <tr key={row.id} className="hover:bg-slate-50"><td className="p-2.5 font-mono font-semibold">{row.id}</td><td className="p-2.5">{row.title}</td><td className="p-2.5">{(/map|gis|coordinate/.test(route.slug)) && <MapPin aria-hidden="true" className="mr-1 inline h-3 w-3"/>}{row.area}</td><td className="p-2.5"><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px]">{row.status}</span></td><td className="p-2.5">{row.owner}</td><td className="p-2.5"><button onClick={() => setSelected(row)} aria-label={`Open details for ${row.id}`} className="inline-flex items-center gap-1 text-blue-900 underline">Details <ArrowUpRight aria-hidden="true" className="h-3 w-3"/></button></td></tr>)}{filtered.length === 0 && <tr><td className="p-5 text-center text-slate-500" colSpan={6}>No demo records match these filters.</td></tr>}</tbody></table></div>
+      {notice && <div role="status" className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">{notice}</div>}
+      <p className="text-[11px] text-slate-500">Demo interface only. Changes are temporary and are not sent to SDAS.</p>
     </section>
+
+    {selected && <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/30" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null); }}><section role="dialog" aria-modal="true" aria-labelledby="record-detail-title" className="h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl"><div className="flex items-start justify-between gap-4"><div><div className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Sample record detail</div><h2 id="record-detail-title" className="mt-1 text-lg font-bold">{selected.title}</h2></div><button aria-label="Close record details" onClick={() => setSelected(null)} className="rounded p-1 hover:bg-slate-100"><X aria-hidden="true" className="h-5 w-5"/></button></div><dl className="mt-5 space-y-4 text-sm">{[['Reference', selected.id], ['Area / scope', selected.area], ['Status', selected.status], ['Responsible', selected.owner], ['Role scope', scope]].map(([term, value]) => <div key={term}><dt className="text-xs text-slate-500">{term}</dt><dd className="mt-1 font-medium text-slate-900">{value}</dd></div>)}</dl><p className="mt-6 rounded bg-amber-50 p-3 text-xs text-amber-950">This is illustrative sample content and does not represent a live SDAS record.</p></section></div>}
+    {isFormOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setIsFormOpen(false); }}><form onSubmit={submitDemo} role="dialog" aria-modal="true" aria-labelledby="demo-form-title" className="w-full max-w-md space-y-4 rounded-md bg-white p-5 shadow-xl"><div className="flex items-start justify-between"><div><div className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo form · no submission</div><h2 id="demo-form-title" className="mt-1 text-lg font-bold">{primaryActionFor(route)}</h2></div><button type="button" aria-label="Close demo form" onClick={() => setIsFormOpen(false)} className="rounded p-1 hover:bg-slate-100"><X aria-hidden="true" className="h-5 w-5"/></button></div><label className="block text-xs font-medium text-slate-700">Item title<input autoFocus required value={draftTitle} onChange={event => setDraftTitle(event.target.value)} className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-2 focus:outline-blue-800" placeholder={`Enter ${route.module.toLowerCase()} title`}/></label><label className="block text-xs font-medium text-slate-700">Assigned scope<input readOnly value={scope} className="mt-1 block w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"/></label><div className="flex justify-end gap-2"><button type="button" onClick={() => setIsFormOpen(false)} className="rounded border border-slate-300 px-3 py-2 text-xs">Cancel</button><button type="submit" className="rounded bg-[#0c243e] px-3 py-2 text-xs font-semibold text-white">Add demo item</button></div></form></div>}
   </div>;
 };

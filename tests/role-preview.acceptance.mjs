@@ -19,15 +19,42 @@ try {
     assert(await page.locator('header').getByText(role.name.en).count() === 1, `${role.code}: identity missing`);
     assert(await page.locator('[aria-current="page"]').getByText(route.module).count() === 1, `${role.code}: module/sidebar mismatch`);
     assert(await page.locator(`[data-module-screen="${route.slug}"]`).count() === 1, `${role.code}: screen mismatch`);
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${role.code}: mobile preview overflows viewport`);
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.reload({ waitUntil: 'commit' });
     assert(new URL(page.url()).pathname === path, `${role.code}: refresh did not preserve preview route`);
   }
+  const firstRoute = MODULE_ROUTES.find(item => item.role === ALL_ROLES[0].id);
+  await page.goto(base + rolePreviewModulePath(firstRoute), { waitUntil: 'commit' });
+  await page.getByRole('button', { name: 'Create item' }).click();
+  await page.getByRole('dialog').getByLabel('Item title').fill('Browser acceptance demo');
+  await page.getByRole('dialog').getByRole('button', { name: 'Add demo item' }).click();
+  await page.getByRole('status').getByText(/not sent or saved/i).waitFor();
+  assert(await page.getByText('Browser acceptance demo').count() === 1, 'demo form did not add a temporary record');
+  await page.locator('button[aria-label^="Open details for"]').first().click();
+  await page.getByRole('dialog', { name: /Browser acceptance demo/ }).waitFor();
+  assert(await page.getByText(/does not represent a live SDAS record/i).count() === 1, 'record details lack demo notice');
+  await page.getByRole('button', { name: 'Close record details' }).click();
+  for (const role of ALL_ROLES) {
+    const route = MODULE_ROUTES.find(item => item.role === role.id);
+    await page.getByLabel('Switch demo role').selectOption(role.id);
+    await page.waitForURL(`**${rolePreviewModulePath(route)}`);
+    assert(await page.locator('header').getByText(role.name.en).count() === 1, `${role.code}: switching preview role did not update role identity`);
+  }
+  await page.getByRole('button', { name: 'All role previews' }).click();
+  await page.waitForURL('**/role-preview');
+  assert(new URL(page.url()).pathname === '/role-preview', 'exit preview did not return to role selection');
   for (const path of Object.values(PUBLIC_ROUTES)) {
     await page.goto(base + path, { waitUntil: 'commit' });
     await page.locator('main').waitFor();
     assert(new URL(page.url()).pathname === path, `public route ${path} mismatch`);
     assert(await page.locator('main').count() > 0, `public route ${path} has no main content`);
   }
+  await page.goto(base + '/', { waitUntil: 'commit' });
+  await page.getByRole('button', { name: 'Services', exact: true }).click();
+  await page.waitForURL('**/services');
+  assert(new URL(page.url()).pathname === '/services', 'public navigation did not move to Services route');
   await page.goto(base + '/role-preview/unknown/bad-module', { waitUntil: 'commit' });
   await page.getByText(/Page not found/i).waitFor();
   assert(await page.getByText(/Page not found/i).count() === 1, 'invalid preview route not rejected');
