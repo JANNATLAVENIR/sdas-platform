@@ -45,12 +45,30 @@ try {
   await page.getByRole('button', { name: 'All role previews' }).click();
   await page.waitForURL('**/role-preview');
   assert(new URL(page.url()).pathname === '/role-preview', 'exit preview did not return to role selection');
+  for (const route of MODULE_ROUTES) {
+    const path = rolePreviewModulePath(route);
+    await page.goto(base + path, { waitUntil: 'commit' });
+    const screen = page.locator(`[data-module-screen="${route.slug}"]`);
+    await screen.waitFor();
+    assert(new URL(page.url()).pathname === path, `${route.roleSlug}/${route.slug}: URL mismatch`);
+    assert(await screen.getByRole('heading', { level: 1, name: route.module, exact: true }).count() === 1, `${route.roleSlug}/${route.slug}: screen title mismatch`);
+    assert(await page.locator('[aria-current="page"]').getByText(route.module, { exact: true }).count() === 1, `${route.roleSlug}/${route.slug}: active module mismatch`);
+  }
   for (const path of Object.values(PUBLIC_ROUTES)) {
     await page.goto(base + path, { waitUntil: 'commit' });
     await page.locator('main').waitFor();
     assert(new URL(page.url()).pathname === path, `public route ${path} mismatch`);
     assert(await page.locator('main').count() > 0, `public route ${path} has no main content`);
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `public route ${path} overflows mobile viewport`);
+    await page.setViewportSize({ width: 1280, height: 900 });
   }
+  await page.goto(base + '/', { waitUntil: 'commit' });
+  const registryCard = page.getByRole('button', { name: 'Address Registry' });
+  await registryCard.focus();
+  await registryCard.press('Enter');
+  await page.waitForURL('**/registry');
+  assert(new URL(page.url()).pathname === '/registry', 'keyboard activation did not open public registry');
   await page.goto(base + '/', { waitUntil: 'commit' });
   await page.getByRole('button', { name: 'Services', exact: true }).click();
   await page.waitForURL('**/services');
@@ -60,5 +78,5 @@ try {
   assert(await page.getByText(/Page not found/i).count() === 1, 'invalid preview route not rejected');
   await page.close();
 } finally { await browser.close(); }
-console.log(JSON.stringify({ rolesTested: ALL_ROLES.length, publicRoutesTested: Object.keys(PUBLIC_ROUTES).length, failures }, null, 2));
+console.log(JSON.stringify({ rolesTested: ALL_ROLES.length, moduleRoutesTested: MODULE_ROUTES.length, publicRoutesTested: Object.keys(PUBLIC_ROUTES).length, failures }, null, 2));
 if (failures.length) process.exitCode = 1;

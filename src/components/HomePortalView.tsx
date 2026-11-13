@@ -26,6 +26,12 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
 }) => {
   const [quickCode, setQuickCode] = useState('SDAS-MOG-7482');
   const exp = getRoleExperience(activeRole, breakGlassActive);
+  const activateCardOnKey = (event: React.KeyboardEvent<HTMLDivElement>, action: () => void) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      action();
+    }
+  };
 
   const copy = {
     en: {
@@ -215,7 +221,9 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
           {/* Card 1: Address Registry */}
           <div
             onClick={() => onNavigate('registry')}
-            className="bg-white hover:bg-slate-50/80 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
+            onKeyDown={event => activateCardOnKey(event, () => onNavigate('registry'))}
+            role="button" tabIndex={0} aria-label={copy.card1Title}
+            className="bg-white hover:bg-slate-50/80 focus-visible:outline-2 focus-visible:outline-blue-900 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
@@ -236,7 +244,9 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
           {/* Card 2: Map Explorer */}
           <div
             onClick={() => onNavigate('map')}
-            className="bg-white hover:bg-slate-50/80 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
+            onKeyDown={event => activateCardOnKey(event, () => onNavigate('map'))}
+            role="button" tabIndex={0} aria-label={copy.card2Title}
+            className="bg-white hover:bg-slate-50/80 focus-visible:outline-2 focus-visible:outline-blue-900 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
@@ -257,7 +267,9 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
           {/* Card 3: Analytics & Reports */}
           <div
             onClick={() => onNavigate('stats')}
-            className="bg-white hover:bg-slate-50/80 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
+            onKeyDown={event => activateCardOnKey(event, () => onNavigate('stats'))}
+            role="button" tabIndex={0} aria-label={copy.card3Title}
+            className="bg-white hover:bg-slate-50/80 focus-visible:outline-2 focus-visible:outline-blue-900 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
@@ -278,7 +290,9 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
           {/* Card 4: Role Workspace / System Administration */}
           <div
             onClick={() => onNavigate('desk')}
-            className="bg-white hover:bg-slate-50/80 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
+            onKeyDown={event => activateCardOnKey(event, () => onNavigate('desk'))}
+            role="button" tabIndex={0} aria-label={exp.cardOverrides.card4Title[language]}
+            className="bg-white hover:bg-slate-50/80 focus-visible:outline-2 focus-visible:outline-blue-900 p-5 rounded-lg border border-slate-200 shadow-xs hover:shadow-sm transition cursor-pointer flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
@@ -357,7 +371,9 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
             onClick={() => onNavigate('ussd')}
-            className="p-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs cursor-pointer transition flex items-center justify-between group"
+            onKeyDown={event => activateCardOnKey(event, () => onNavigate('ussd'))}
+            role="button" tabIndex={0} aria-label={copy.ussdTitle}
+            className="p-5 bg-white hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-blue-900 border border-slate-200 rounded-lg shadow-xs cursor-pointer transition flex items-center justify-between group"
           >
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
@@ -375,7 +391,9 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
 
           <div
             onClick={() => onNavigate('partners')}
-            className="p-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs cursor-pointer transition flex items-center justify-between group"
+            onKeyDown={event => activateCardOnKey(event, () => onNavigate('partners'))}
+            role="button" tabIndex={0} aria-label={copy.dispatchTitle}
+            className="p-5 bg-white hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-blue-900 border border-slate-200 rounded-lg shadow-xs cursor-pointer transition flex items-center justify-between group"
           >
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center font-bold">

@@ -145,12 +145,22 @@ export const ResourcesView: React.FC = () => {
         <div className="divide-y divide-slate-200 pt-3 text-xs">
           <div className="py-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
             <div>
+              <span className="font-bold text-slate-900 block">SDAS Master Blueprint v3.0</span>
+              <span className="text-slate-500 text-[11px]">Project blueprint and consolidated addressing requirements.</span>
+            </div>
+            <a href="/assets/aistudio/SDAS_Master_Blueprint_V3_0_Mogadishu_Consolidated__1__4a545dab.pdf" target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-semibold flex items-center gap-1.5 transition shrink-0 focus-visible:outline-2 focus-visible:outline-blue-900">
+              <Download aria-hidden="true" className="w-3.5 h-3.5" /> Open PDF
+            </a>
+          </div>
+          <div className="py-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
+            <div>
               <span className="font-bold text-slate-900 block">SDAS Citizen Guide (Somali / English)</span>
               <span className="text-slate-500 text-[11px]">How to locate and share your official address code.</span>
             </div>
-            <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-semibold flex items-center gap-1.5 transition shrink-0">
-              <Download className="w-3.5 h-3.5" /> PDF
-            </button>
+            <details className="max-w-sm shrink-0 rounded border border-slate-200 bg-slate-50 px-3 py-2">
+              <summary className="cursor-pointer font-semibold text-blue-900">Read quick guide</summary>
+              <p className="mt-2 max-w-xs text-[11px] leading-relaxed text-slate-600">Search by public address code or use the map to browse published locations. Share only the address code. For an incorrect public record, use the request page to submit a correction for review.</p>
+            </details>
           </div>
 
           <div className="py-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
@@ -158,9 +168,7 @@ export const ResourcesView: React.FC = () => {
               <span className="font-bold text-slate-900 block">Signage & Building Plate Standards Manual</span>
               <span className="text-slate-500 text-[11px]">Technical specifications for aluminum plates, reflectivity, and QR tokens.</span>
             </div>
-            <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-semibold flex items-center gap-1.5 transition shrink-0">
-              <Download className="w-3.5 h-3.5" /> PDF
-            </button>
+            <span className="rounded bg-slate-100 px-3 py-1.5 text-[11px] text-slate-600">Reference summary</span>
           </div>
 
           <div className="py-3.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5">
@@ -168,9 +176,7 @@ export const ResourcesView: React.FC = () => {
               <span className="font-bold text-slate-900 block">Banaadir District Addressing Codebook</span>
               <span className="text-slate-500 text-[11px]">List of officially gazetted street names, sectors, and localities.</span>
             </div>
-            <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-semibold flex items-center gap-1.5 transition shrink-0">
-              <Download className="w-3.5 h-3.5" /> PDF
-            </button>
+            <span className="rounded bg-slate-100 px-3 py-1.5 text-[11px] text-slate-600">Reference summary</span>
           </div>
         </div>
       </div>
@@ -306,9 +312,9 @@ export const ContactView: React.FC = () => {
             {sent ? (
               <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-md text-center space-y-2">
                 <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                <div className="font-bold text-slate-900">Message Logged with Service Desk</div>
+                <div className="font-bold text-slate-900">Demo message recorded in this preview</div>
                 <p className="text-slate-600 text-[11px]">
-                  A Banaadir addressing coordinator will respond within 1 business day.
+                  This frontend preview does not send messages to the service desk. No reply will be generated.
                 </p>
               </div>
             ) : (

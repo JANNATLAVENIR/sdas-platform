@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, ClipboardList, Download, Filter, MapPin, Plus, Search, ShieldCheck, X } from 'lucide-react';
+import { ArrowUpRight, BarChart3, ClipboardList, Download, Filter, MapPin, Plus, Search, Settings2, ShieldCheck, Users, Workflow, X } from 'lucide-react';
 import type { ModuleRoute } from '../../routing/routeRegistry';
 
 interface Props { route: ModuleRoute; roleName: string; scope: string; }
@@ -40,6 +40,20 @@ const recordsFor = (route: ModuleRoute, roleName: string): RecordRow[] => {
 };
 
 const primaryActionFor = (route: ModuleRoute) => /audit|log|history|security/.test(route.slug) ? 'Export report' : /report|statistics|performance/.test(route.slug) ? 'Generate report' : /staff|user|team|assignment/.test(route.slug) ? 'New assignment' : /api|credential|key/.test(route.slug) ? 'Request credential' : /request|application|address|correction/.test(route.slug) ? 'New request' : 'Create item';
+const moduleVariant = (route: ModuleRoute) => {
+  if (/map|gis|boundary|coordinate|street|footprint|layer|area|coverage/.test(route.slug)) return 'geospatial';
+  if (/dashboard|overview|report|statistics|performance|analytics/.test(route.slug)) return 'analytics';
+  if (/queue|task|request|application|approval|verification|correction|complaint|escalat/.test(route.slug)) return 'workflow';
+  if (/staff|user|team|department|region|district|permission|configuration|standard|policy/.test(route.slug)) return 'administration';
+  return 'records';
+};
+const formFieldsFor = (route: ModuleRoute) => {
+  if (/staff|user|team|assignment/.test(route.slug)) return [['Staff member', 'text'], ['Assigned district', 'text'], ['Due date', 'date']];
+  if (/api|credential|key/.test(route.slug)) return [['Application name', 'text'], ['Contact email', 'email'], ['Requested scope', 'text']];
+  if (/address|request|application|correction|complaint/.test(route.slug)) return [['Address code or reference', 'text'], ['District / locality', 'text'], ['Request details', 'text']];
+  if (/policy|standard|configuration|setting/.test(route.slug)) return [['Setting name', 'text'], ['Proposed value', 'text'], ['Change justification', 'text']];
+  return [['Reference', 'text'], ['Assigned area', 'text'], ['Notes', 'text']];
+};
 
 export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope }) => {
   const [records, setRecords] = useState(() => recordsFor(route, roleName));
@@ -48,6 +62,7 @@ export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope })
   const [selected, setSelected] = useState<RecordRow | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
+  const [draftFields, setDraftFields] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState('');
   const readOnly = /audit|log|history|security/.test(route.slug);
   const filtered = useMemo(() => records.filter(row =>
@@ -55,6 +70,8 @@ export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope })
     `${row.id} ${row.title} ${row.area} ${row.status} ${row.owner}`.toLowerCase().includes(query.toLowerCase())
   ), [records, query, statusFilter]);
   const statuses = Array.from(new Set(records.map(record => record.status)));
+  const variant = moduleVariant(route);
+  const formFields = formFieldsFor(route);
 
   useEffect(() => {
     setRecords(recordsFor(route, roleName));
@@ -62,6 +79,7 @@ export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope })
     setStatusFilter('all');
     setSelected(null);
     setIsFormOpen(false);
+    setDraftFields({});
     setNotice('');
   }, [route.slug, roleName]);
 
@@ -82,6 +100,7 @@ export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope })
     if (!title) return;
     setRecords(current => [{ id: `DEMO-${Date.now().toString().slice(-5)}`, title, area: scope, status: 'Draft · demo only', owner: roleName }, ...current]);
     setDraftTitle('');
+    setDraftFields({});
     setIsFormOpen(false);
     setNotice('Demo item added to this screen only. It was not sent or saved.');
   };
@@ -96,6 +115,10 @@ export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope })
     <section aria-label="Module summary" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {[[`Items in ${scope}`, String(records.length), 'Demo records'], ['Needs attention', String(records.filter(row => /pending|review|correction/i.test(row.status)).length), 'Sample review queue'], ['Module status', 'Preview', 'No live data']].map(([label, value, detail]) => <article key={label} className="rounded-md border border-slate-200 bg-white p-4"><div className="text-xs text-slate-500">{label}</div><div className="mt-1 text-xl font-bold tabular-nums text-slate-900">{value}</div><div className="mt-1 text-[11px] text-slate-500">{detail}</div></article>)}
     </section>
+    {variant === 'geospatial' && <section className="overflow-hidden rounded-md border border-slate-200 bg-white"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3"><div><h2 className="text-sm font-semibold">Geographic coverage · {scope}</h2><p className="mt-1 text-[11px] text-slate-500">Illustrative map preview · sample locations only</p></div><span className="rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-600">Map layer: {route.module}</span></div><div className="relative h-56 overflow-hidden bg-[#eaf2ed] sm:h-72"><svg aria-label={`Demo map for ${scope}`} role="img" viewBox="0 0 900 340" className="h-full w-full"><path d="M0 240C130 200 155 285 280 235S440 210 500 145s170-5 210-80 140-20 190-65v340H0Z" fill="#d3e4d4"/><path d="M0 80c130 60 175-25 310 15s190 100 300 50 180-10 290 35" fill="none" stroke="#fff" strokeWidth="18"/><path d="M180 0c-10 100 90 110 40 190s0 110 10 150M540 0c-30 90 20 140 120 145s80 70 100 195" fill="none" stroke="#fff" strokeWidth="12"/><path d="M0 240C130 200 155 285 280 235S440 210 500 145s170-5 210-80 140-20 190-65" fill="none" stroke="#a7c4a7" strokeWidth="3"/>{[[240,162,'Hodan'],[454,198,'Wadajir'],[684,118,'Kaaraan']].map(([x,y,label])=><g key={label as string}><circle cx={x as number} cy={y as number} r="17" fill="#0c243e" opacity=".13"/><circle cx={x as number} cy={y as number} r="8" fill="#0c243e"/><text x={(x as number)+13} y={(y as number)+4} fontSize="13" fill="#0c243e" fontWeight="600">{label}</text></g>)}</svg><div className="absolute bottom-3 left-3 rounded bg-white/95 px-3 py-2 text-[10px] text-slate-600 shadow">3 sample locations · not survey data</div></div></section>}
+    {variant === 'analytics' && <section className="rounded-md border border-slate-200 bg-white p-4 sm:p-5"><div className="flex items-center gap-2"><BarChart3 aria-hidden="true" className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold">{route.module} trend</h2><span className="ml-auto text-[10px] text-slate-500">Illustrative · demo values</span></div><div className="mt-5 grid h-32 grid-cols-7 items-end gap-2 border-b border-l border-slate-200 px-3 sm:h-40">{[42,57,49,72,63,86,76].map((height,index)=><div key={index} className="flex h-full flex-col items-center justify-end gap-1"><div className="w-full max-w-12 rounded-t bg-[#1565c0]" style={{height:`${height}%`}} title={`Sample period ${index+1}: ${height}`}/><span className="text-[9px] text-slate-500">P{index+1}</span></div>)}</div><div className="mt-2 text-right text-[10px] text-slate-500">Sample periods · no live reporting data</div></section>}
+    {variant === 'workflow' && <section className="rounded-md border border-slate-200 bg-white p-4 sm:p-5"><div className="flex items-center gap-2"><Workflow aria-hidden="true" className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold">Workflow stages</h2><span className="ml-auto text-[10px] text-slate-500">{scope}</span></div><div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">{[['Submitted',records.filter(row=>/await|pending/i.test(row.status)).length],['In review',records.filter(row=>/review|progress/i.test(row.status)).length],['Completed',records.filter(row=>/verified|complete|approved/i.test(row.status)).length]].map(([stage,count])=><div key={stage} className="rounded border border-slate-200 bg-slate-50 p-3"><div className="text-[11px] text-slate-600">{stage}</div><div className="mt-1 text-lg font-semibold">{count}</div><div className="text-[10px] text-slate-500">sample records</div></div>)}</div></section>}
+    {variant === 'administration' && <section className="rounded-md border border-slate-200 bg-white p-4 sm:p-5"><div className="flex items-center gap-2"><Users aria-hidden="true" className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold">Scope and administration</h2></div><div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2"><div className="rounded border border-slate-200 p-3"><div className="text-[10px] uppercase tracking-wide text-slate-500">Active scope</div><div className="mt-1 text-sm font-semibold">{scope}</div><p className="mt-1 text-[11px] text-slate-500">Sample workspace scope for {roleName}.</p></div><div className="rounded border border-slate-200 p-3"><div className="text-[10px] uppercase tracking-wide text-slate-500">Module controls</div><div className="mt-1 flex items-center gap-2 text-sm font-semibold"><Settings2 aria-hidden="true" className="h-4 w-4"/>{route.module}</div><p className="mt-1 text-[11px] text-slate-500">Controls here are visual examples and do not change system policy.</p></div></div></section>}
     <section className="space-y-3 rounded-md border border-slate-200 bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><ClipboardList aria-hidden="true" className="h-4 w-4 text-slate-600"/><h2 className="text-sm font-semibold text-slate-900">{route.module} records</h2></div><div className="flex flex-wrap gap-2">
         <label className="relative"><span className="sr-only">Search {route.module} records</span><Search aria-hidden="true" className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400"/><input aria-label={`Search ${route.module} records`} value={query} onChange={event => setQuery(event.target.value)} placeholder="Search records" className="w-44 rounded border border-slate-300 py-1.5 pl-8 pr-2 text-xs focus:outline-2 focus:outline-blue-800"/></label>
@@ -108,6 +131,6 @@ export const ModuleWorkspaceView: React.FC<Props> = ({ route, roleName, scope })
     </section>
 
     {selected && <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/30" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null); }}><section role="dialog" aria-modal="true" aria-labelledby="record-detail-title" className="h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl"><div className="flex items-start justify-between gap-4"><div><div className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Sample record detail</div><h2 id="record-detail-title" className="mt-1 text-lg font-bold">{selected.title}</h2></div><button aria-label="Close record details" onClick={() => setSelected(null)} className="rounded p-1 hover:bg-slate-100"><X aria-hidden="true" className="h-5 w-5"/></button></div><dl className="mt-5 space-y-4 text-sm">{[['Reference', selected.id], ['Area / scope', selected.area], ['Status', selected.status], ['Responsible', selected.owner], ['Role scope', scope]].map(([term, value]) => <div key={term}><dt className="text-xs text-slate-500">{term}</dt><dd className="mt-1 font-medium text-slate-900">{value}</dd></div>)}</dl><p className="mt-6 rounded bg-amber-50 p-3 text-xs text-amber-950">This is illustrative sample content and does not represent a live SDAS record.</p></section></div>}
-    {isFormOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setIsFormOpen(false); }}><form onSubmit={submitDemo} role="dialog" aria-modal="true" aria-labelledby="demo-form-title" className="w-full max-w-md space-y-4 rounded-md bg-white p-5 shadow-xl"><div className="flex items-start justify-between"><div><div className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo form · no submission</div><h2 id="demo-form-title" className="mt-1 text-lg font-bold">{primaryActionFor(route)}</h2></div><button type="button" aria-label="Close demo form" onClick={() => setIsFormOpen(false)} className="rounded p-1 hover:bg-slate-100"><X aria-hidden="true" className="h-5 w-5"/></button></div><label className="block text-xs font-medium text-slate-700">Item title<input autoFocus required value={draftTitle} onChange={event => setDraftTitle(event.target.value)} className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-2 focus:outline-blue-800" placeholder={`Enter ${route.module.toLowerCase()} title`}/></label><label className="block text-xs font-medium text-slate-700">Assigned scope<input readOnly value={scope} className="mt-1 block w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"/></label><div className="flex justify-end gap-2"><button type="button" onClick={() => setIsFormOpen(false)} className="rounded border border-slate-300 px-3 py-2 text-xs">Cancel</button><button type="submit" className="rounded bg-[#0c243e] px-3 py-2 text-xs font-semibold text-white">Add demo item</button></div></form></div>}
+    {isFormOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setIsFormOpen(false); }}><form onSubmit={submitDemo} role="dialog" aria-modal="true" aria-labelledby="demo-form-title" className="w-full max-w-md space-y-4 rounded-md bg-white p-5 shadow-xl"><div className="flex items-start justify-between"><div><div className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo form · no submission</div><h2 id="demo-form-title" className="mt-1 text-lg font-bold">{primaryActionFor(route)}</h2></div><button type="button" aria-label="Close demo form" onClick={() => setIsFormOpen(false)} className="rounded p-1 hover:bg-slate-100"><X aria-hidden="true" className="h-5 w-5"/></button></div><label className="block text-xs font-medium text-slate-700">Item title<input autoFocus required value={draftTitle} onChange={event => setDraftTitle(event.target.value)} className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-2 focus:outline-blue-800" placeholder={`Enter ${route.module.toLowerCase()} title`}/></label>{formFields.map(([label, type]) => <label key={label} className="block text-xs font-medium text-slate-700">{label}<input type={type} value={draftFields[label] || ''} onChange={event => setDraftFields(current => ({ ...current, [label]: event.target.value }))} className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-2 focus:outline-blue-800"/></label>)}<label className="block text-xs font-medium text-slate-700">Assigned scope<input readOnly value={scope} className="mt-1 block w-full rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600"/></label><div className="flex justify-end gap-2"><button type="button" onClick={() => setIsFormOpen(false)} className="rounded border border-slate-300 px-3 py-2 text-xs">Cancel</button><button type="submit" className="rounded bg-[#0c243e] px-3 py-2 text-xs font-semibold text-white">Add demo item</button></div></form></div>}
   </div>;
 };
