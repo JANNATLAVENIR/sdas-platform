@@ -329,6 +329,7 @@ export const ContactView: React.FC = () => {
                   <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
                   <input
                     type="text"
+                    aria-label="Full Name"
                     required
                     placeholder="Axmed Maxamed..."
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs"
@@ -338,6 +339,7 @@ export const ContactView: React.FC = () => {
                   <label className="block font-semibold text-slate-700 mb-1">District / Subject</label>
                   <input
                     type="text"
+                    aria-label="District or subject"
                     required
                     placeholder="Hodan District Inquiry..."
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs"
@@ -346,6 +348,7 @@ export const ContactView: React.FC = () => {
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Message</label>
                   <textarea
+                    aria-label="Message"
                     rows={3}
                     required
                     placeholder="Describe your addressing inquiry..."

@@ -100,6 +100,7 @@ export const InstitutionalPartnersView: React.FC = () => {
         <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-2.5">
           <input
             type="text"
+            aria-label="Address code for dispatch geocoding"
             value={codeQuery}
             onChange={(e) => setCodeQuery(e.target.value)}
             placeholder="SDAS-MOG-7482..."

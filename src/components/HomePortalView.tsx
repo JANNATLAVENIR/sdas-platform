@@ -352,6 +352,7 @@ export const HomePortalView: React.FC<HomePortalViewProps> = ({
           <form onSubmit={handleQuickSubmit} className="flex flex-col sm:flex-row gap-2.5">
             <input
               type="text"
+              aria-label={copy.quickTitle}
               value={quickCode}
               onChange={(e) => setQuickCode(e.target.value)}
               placeholder={copy.placeholder}

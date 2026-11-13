@@ -238,6 +238,7 @@ export const HousePlatesView: React.FC<HousePlatesViewProps> = ({
                 <label className="block font-semibold text-slate-700 mb-1">Koodka Ciwaanka Dijitaalka ah</label>
                 <input
                   type="text"
+                  aria-label="Koodka Ciwaanka Dijitaalka ah"
                   value={plateCode}
                   onChange={(e) => setPlateCode(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 font-mono text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-900"
@@ -249,6 +250,7 @@ export const HousePlatesView: React.FC<HousePlatesViewProps> = ({
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Degmada</label>
                   <select
+                    aria-label="Degmada"
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-900"
@@ -264,6 +266,7 @@ export const HousePlatesView: React.FC<HousePlatesViewProps> = ({
                   <label className="block font-semibold text-slate-700 mb-1">Lambarka Guriga</label>
                   <input
                     type="text"
+                    aria-label="Lambarka Guriga"
                     value={streetNumber}
                     onChange={(e) => setStreetNumber(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-900"
@@ -309,7 +312,7 @@ export const HousePlatesView: React.FC<HousePlatesViewProps> = ({
 
               {submitted && (
                 <div className="p-3 bg-emerald-50 text-emerald-800 rounded border border-emerald-200 text-center font-semibold flex items-center justify-center gap-1.5">
-                  <Check className="w-4 h-4" /> Dalabkaaga si guul leh ayaa loo diiwaangeliyay!
+                  <Check className="w-4 h-4" /> Dalab demo ah ayaa lagu daray liiskan browser-ka keliya; lama dirin.
                 </div>
               )}
             </form>

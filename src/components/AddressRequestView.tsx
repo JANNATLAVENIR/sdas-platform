@@ -113,6 +113,7 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Degmada (Banaadir)</label>
               <select
+                aria-label="Degmada (Banaadir)"
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-900"
@@ -127,6 +128,7 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
               <label className="block font-semibold text-slate-700 mb-1">Xaafadda (Locality)</label>
               <input
                 type="text"
+                aria-label="Xaafadda (Locality)"
                 value={locality}
                 onChange={(e) => setLocality(e.target.value)}
                 placeholder="Tusaale: Xaafadda Taleex ama KPP..."
@@ -140,6 +142,7 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
                 <label className="block font-semibold text-slate-700 mb-1">Wadada ama Jidka u dhow</label>
                 <input
                   type="text"
+                  aria-label="Wadada ama Jidka u dhow"
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
                   placeholder="Tusaale: Wadada 30ka..."
@@ -150,6 +153,7 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
                 <label className="block font-semibold text-slate-700 mb-1">Lambarka Guriga (haddii uu jiro)</label>
                 <input
                   type="text"
+                  aria-label="Lambarka Guriga"
                   value={buildingNumber}
                   onChange={(e) => setBuildingNumber(e.target.value)}
                   placeholder="Tusaale: 412..."
@@ -215,6 +219,7 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
               <label className="block font-semibold text-slate-700 mb-1">Magaca Buuxa ee Codsadaha</label>
               <input
                 type="text"
+                aria-label="Magaca Buuxa ee Codsadaha"
                 value={applicantName}
                 onChange={(e) => setApplicantName(e.target.value)}
                 placeholder="Magaca saddexan..."
@@ -227,6 +232,7 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
               <label className="block font-semibold text-slate-700 mb-1">Lambarka Taleefanka (SMS loogu soo diri doono koodhka)</label>
               <input
                 type="tel"
+                aria-label="Lambarka Taleefanka"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+252 61 XXXXXXX"
@@ -267,10 +273,10 @@ export const AddressRequestView: React.FC<AddressRequestViewProps> = ({
 
           <div className="space-y-2">
             <h3 className="text-xl font-serif font-bold text-slate-900">
-              Codsigaaga Si Guul leh ayaa loo Gudbiyay!
+              Foomka demo-ga waa la diyaariyey
             </h3>
             <p className="text-xs text-slate-600 max-w-md mx-auto">
-              Codsigaaga waxaa loo gudbiyay xafiiska xaqiijinta ciwaanada ee Degmada {district}. Kormeeraha goobta ayaa imaan doona si uu u xaqiijiyo iskudhafka GPS-ka.
+              Tixraac demo ah: {referenceId}. Xogtan browser-kan keliya ayay ku jirtaa; looma dirin xafiis ama nidaam kale.
             </p>
           </div>
 

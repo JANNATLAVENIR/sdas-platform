@@ -1,11 +1,13 @@
 import { chromium } from 'playwright';
 import { ALL_ROLES } from '../src/data/rolesData.ts';
 import { MODULE_ROUTES, PUBLIC_ROUTES, rolePreviewModulePath } from '../src/routing/routeRegistry.ts';
+import { getModuleScreenDefinition, MODULE_SCREEN_COVERAGE } from '../src/routing/moduleScreenCatalog.ts';
 
 const base = process.env.SDAS_BASE_URL || 'http://127.0.0.1:3000';
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
+assert(MODULE_SCREEN_COVERAGE.covered === MODULE_ROUTES.length && MODULE_SCREEN_COVERAGE.missingPaths.length === 0, 'module screen catalog does not cover every module route');
 try {
   const page = await browser.newPage();
   page.setDefaultTimeout(5000);
@@ -25,8 +27,8 @@ try {
     await page.reload({ waitUntil: 'commit' });
     assert(new URL(page.url()).pathname === path, `${role.code}: refresh did not preserve preview route`);
   }
-  const firstRoute = MODULE_ROUTES.find(item => item.role === ALL_ROLES[0].id);
-  await page.goto(base + rolePreviewModulePath(firstRoute), { waitUntil: 'commit' });
+  const formRoute = MODULE_ROUTES.find(item => getModuleScreenDefinition(item)?.action === 'Create item');
+  await page.goto(base + rolePreviewModulePath(formRoute), { waitUntil: 'commit' });
   await page.getByRole('button', { name: 'Create item' }).click();
   await page.getByRole('dialog').getByLabel('Item title').fill('Browser acceptance demo');
   await page.getByRole('dialog').getByRole('button', { name: 'Add demo item' }).click();
@@ -50,6 +52,7 @@ try {
     await page.goto(base + path, { waitUntil: 'commit' });
     const screen = page.locator(`[data-module-screen="${route.slug}"]`);
     await screen.waitFor();
+    assert(await screen.getAttribute('data-module-kind') !== null, `${route.roleSlug}/${route.slug}: no screen type is assigned`);
     assert(new URL(page.url()).pathname === path, `${route.roleSlug}/${route.slug}: URL mismatch`);
     assert(await screen.getByRole('heading', { level: 1, name: route.module, exact: true }).count() === 1, `${route.roleSlug}/${route.slug}: screen title mismatch`);
     assert(await page.locator('[aria-current="page"]').getByText(route.module, { exact: true }).count() === 1, `${route.roleSlug}/${route.slug}: active module mismatch`);
@@ -59,6 +62,14 @@ try {
     await page.locator('main').waitFor();
     assert(new URL(page.url()).pathname === path, `public route ${path} mismatch`);
     assert(await page.locator('main').count() > 0, `public route ${path} has no main content`);
+    const unnamedControls = await page.evaluate(() => Array.from(document.querySelectorAll('button, a[href], input:not([type="hidden"]), select, textarea, [role="button"]')).filter(element => {
+      const node = element;
+      const text = node.getAttribute('aria-label') || node.getAttribute('title') || node.textContent?.trim();
+      const hasLabel = node.id ? document.querySelector(`label[for="${CSS.escape(node.id)}"]`) : node.closest('label');
+      const hasImageAlt = Boolean(node.querySelector('img[alt]'));
+      return !text && !hasLabel && !hasImageAlt;
+    }).map(element => `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}`).slice(0, 5));
+    assert(unnamedControls.length === 0, `public route ${path} has unnamed controls: ${unnamedControls.join(', ')}`);
     await page.setViewportSize({ width: 390, height: 844 });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `public route ${path} overflows mobile viewport`);
     await page.setViewportSize({ width: 1280, height: 900 });

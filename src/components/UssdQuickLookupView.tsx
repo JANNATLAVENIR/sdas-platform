@@ -126,6 +126,7 @@ export const UssdQuickLookupView: React.FC = () => {
                   </div>
                   <input
                     type="text"
+                    aria-label="SDAS address code for USSD lookup"
                     value={codeInput}
                     onChange={(e) => setCodeInput(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-600 text-emerald-300 rounded p-1 text-xs font-mono uppercase"
@@ -223,6 +224,7 @@ export const UssdQuickLookupView: React.FC = () => {
           <form onSubmit={handleSendSms} className="flex gap-2">
             <input
               type="text"
+              aria-label="SDAS address code for SMS lookup"
               placeholder="Qor koodka ciwaanka (tusaale SDAS-MOG-7482)..."
               value={smsQuery}
               onChange={(e) => setSmsQuery(e.target.value)}

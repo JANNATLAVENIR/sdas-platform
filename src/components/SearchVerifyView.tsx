@@ -98,6 +98,7 @@ export const SearchVerifyView: React.FC<SearchVerifyViewProps> = ({
             <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
             <input
               type="text"
+              aria-label={t.searchSubtitle}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="SDAS-MOG-7482 ama Wadada Makka Al-Mukarrama..."

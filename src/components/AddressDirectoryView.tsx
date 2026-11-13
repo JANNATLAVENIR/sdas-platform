@@ -81,6 +81,7 @@ export const AddressDirectoryView: React.FC<AddressDirectoryViewProps> = ({
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
             type="text"
+            aria-label="Search address directory"
             placeholder="Ka raadi koodka, xaafadda ama wadada..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
