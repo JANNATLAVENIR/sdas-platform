@@ -30,8 +30,9 @@ import { AuthenticatedWorkspaceRouter } from './components/workspaces/Authentica
 import { fetchCurrentSession, logoutSession } from './api/sdasClient';
 import type { AuthUser } from './api/sdasClient';
 import { ArrowLeft } from 'lucide-react';
-import { MODULE_ROUTES, PUBLIC_ROUTES, publicRouteForPath, rolePath, rolePreviewPath, routeForPath } from './routing/routeRegistry';
+import { MODULE_ROUTES, PUBLIC_ROUTES, publicRouteForPath, rolePath, rolePreviewPath, rolePreviewRouteForPath, rolePreviewModulePath, routeForPath } from './routing/routeRegistry';
 import { RolePreviewWorkspace } from './components/RolePreviewWorkspace';
+import { DemoRoleWorkspace } from './components/DemoRoleWorkspace';
 
 type PortalView =
   | 'home'
@@ -83,7 +84,8 @@ export default function App() {
   const moduleRoute = routeForPath(pathname);
   const publicKey = publicRouteForPath(pathname);
   const previewRoute = pathname === rolePreviewPath;
-  const unknownRoute = !moduleRoute && !publicKey && !previewRoute;
+  const previewModule = rolePreviewRouteForPath(pathname);
+  const unknownRoute = !moduleRoute && !publicKey && !previewRoute && !previewModule;
 
   useEffect(() => {
     fetchCurrentSession().then((sess) => {
@@ -178,7 +180,8 @@ export default function App() {
   if (moduleRoute && authUser && authUser.role !== moduleRoute.role) return <main className="min-h-screen p-10"><h1 className="text-2xl font-bold">Workspace unavailable</h1><p className="mt-2">Your signed-in role does not match this workspace.</p><button className="mt-5 underline" onClick={() => navigatePath(rolePath(authUser.role))}>Open your workspace</button></main>;
   if (moduleRoute && !authUser) return <main className="min-h-screen p-10"><h1 className="text-2xl font-bold">Sign in required</h1><p className="mt-2">Sign in with an account for this workspace to continue.</p><button className="mt-5 underline" onClick={() => setIsSignInOpen(true)}>Sign in</button><SignInModal isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)} language={language} onAuthenticated={handleAuthenticated} /></main>;
 
-  if (previewRoute) return <RolePreviewWorkspace language={language} activeRole={activeRole} onSelectRole={(role) => navigatePath(MODULE_ROUTES.find(r => r.role === role)!.path)} onNavigate={handleNavigate} />;
+  if (previewModule) return <DemoRoleWorkspace route={previewModule} onNavigate={navigatePath} />;
+  if (previewRoute) return <RolePreviewWorkspace language={language} activeRole={activeRole} onSelectRole={(role) => { const route = MODULE_ROUTES.find(item => item.role === role)!; navigatePath(rolePreviewModulePath(route)); }} onNavigate={handleNavigate} />;
   if (unknownRoute) return <main className="min-h-screen p-10 font-sans"><h1 className="text-2xl font-bold">Page not found</h1><p className="mt-2">The requested SDAS page or workspace module does not exist.</p><button className="mt-5 underline" onClick={() => navigatePath('/')}>Return to portal</button></main>;
 
   return (

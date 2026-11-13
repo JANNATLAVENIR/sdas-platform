@@ -10,34 +10,43 @@ const record = (name, ok, detail = '') => results.push({ name, ok, detail });
 try {
   for (const role of ALL_ROLES) {
     const page = await browser.newPage();
+    page.setDefaultTimeout(8000);
+    const suffix = ({ national_super_admin:'superadmin', national_authority_admin:'authority', director_general:'dg', department_admin:'dept', regional_admin:'regional', district_admin:'district', gis_officer:'gis', data_quality_officer:'quality', field_ops_supervisor:'supervisor', field_surveyor:'surveyor', address_verifier:'verifier', auditor:'auditor', public_citizen:'citizen', institutional_api_client:'api' })[role.id];
+    const login = await page.request.post(`${base}/api/auth/login`, { data: { email: `r${String(role.order).padStart(2, '0')}.${suffix}@sdas.dev`, password: 'SdasDev!2026' } });
+    if (!login.ok()) throw new Error(`${role.code} login failed: ${login.status()} ${await login.text()}`);
+    const { token } = await login.json();
+    await page.addInitScript((value) => sessionStorage.setItem('sdas_session_token', value), token);
     const target = rolePath(role.id);
-    await page.goto(base + target);
-    await page.getByRole('button', { name: /sign in/i }).last().click().catch(() => {});
-    await page.locator('input[type=email]').fill(`r${String(role.order).padStart(2, '0')}.${({ national_super_admin:'superadmin', national_authority_admin:'authority', director_general:'dg', department_admin:'dept', regional_admin:'regional', district_admin:'district', gis_officer:'gis', data_quality_officer:'quality', field_ops_supervisor:'supervisor', field_surveyor:'surveyor', address_verifier:'verifier', auditor:'auditor', public_citizen:'citizen', institutional_api_client:'api' })[role.id]}@sdas.dev`);
-    await page.locator('input[type=password]').fill('SdasDev!2026');
-    await page.getByRole('button', { name: /sign in/i }).last().click();
-    await page.waitForURL('**/workspace/**', { timeout: 10000 });
-    await page.getByText(role.code, { exact: true }).first().waitFor();
+    await page.goto(base + target, { waitUntil: 'commit' });
+    await page.getByText(new RegExp(`${role.code}\\b`)).first().waitFor();
     const route = MODULE_ROUTES.find(r => r.role === role.id);
-    await page.goto(base + route.path);
-    await page.getByText(route.module, { exact: true }).first().waitFor({ timeout: 5000 }).catch(() => {});
+    await page.goto(base + route.path, { waitUntil: 'commit' });
+    await page.locator('[aria-current="page"]:visible').filter({ hasText: route.module }).first().waitFor();
     const correctPath = new URL(page.url()).pathname === route.path;
-    const active = await page.locator('[aria-current="page"]').innerText().catch(() => '');
-    record(`${role.code} direct module`, correctPath && active.includes(route.module), `path=${new URL(page.url()).pathname}; active=${active}`);
-    await page.reload();
+    const active = await page.locator('[aria-current="page"]:visible').first().innerText().catch(() => '');
+    const screen = route.implemented
+      ? (role.id === 'field_surveyor'
+        ? await page.getByText(route.module, { exact: true }).count() > 0
+        : await page.locator('main').count() > 0)
+      : await page.locator(`[data-module-screen="${route.slug}"] h1`).getByText(route.module, { exact: true }).count() === 1;
+    record(`${role.code} direct module`, correctPath && active.includes(route.module) && screen, `path=${new URL(page.url()).pathname}; active=${active}; screen=${screen}; implemented=${route.implemented}`);
+    await page.reload({ waitUntil: 'commit' });
     record(`${role.code} refresh`, new URL(page.url()).pathname === route.path);
     await page.close();
   }
 
   const page = await browser.newPage();
   for (const path of ['/','/search','/registry','/map','/request','/plates','/statistics','/services','/about','/resources','/ussd','/partners','/policies','/help','/contact']) {
-    await page.goto(base + path);
+    await page.goto(base + path, { waitUntil: 'commit' });
+    await page.locator('main').waitFor();
     record(`public ${path}`, await page.locator('header').count() > 0 || path === '/');
   }
-  await page.goto(base + '/role-preview');
-  record('role preview opens', await page.getByText(/All 14 Roles|Dhammaan 14/i).count() > 0);
-  record('role preview lists 14', await page.locator('button').filter({ hasText: /R01|R14/ }).count() > 1);
-  await page.goto(base + '/workspace/unknown/not-a-module');
+  await page.goto(base + '/role-preview', { waitUntil: 'commit' });
+  await page.getByRole('button', { name: 'All 14 Roles', exact: true }).waitFor();
+  record('role preview opens', await page.getByRole('button', { name: 'All 14 Roles', exact: true }).count() > 0);
+  record('role preview lists roles', await page.getByText('R01').count() > 0 && await page.getByText('R14').count() > 0);
+  await page.goto(base + '/workspace/unknown/not-a-module', { waitUntil: 'commit' });
+  await page.getByText(/Page not found/i).waitFor();
   record('invalid route', await page.getByText(/Page not found/i).count() > 0);
   await page.close();
 } finally {

@@ -28,7 +28,7 @@ const ROLE_IMPLEMENTED: Record<UserRole, string[]> = {
   gis_officer: ['gis-workspace'],
   data_quality_officer: ['data-quality-dashboard'],
   field_ops_supervisor: ['field-operations-dashboard'],
-  field_surveyor: [],
+  field_surveyor: ['my-field-dashboard','my-assigned-tasks','gps-capture','building-registration-form','address-observation-form','offline-records','synchronization-queue','submission-history'],
   address_verifier: ['verification-dashboard'],
   auditor: ['audit-dashboard','complete-audit-logs','security-events'],
   public_citizen: ['search-address'],
@@ -52,6 +52,12 @@ export const rolePath = (role: UserRole, module?: string) => {
 
 export const routeForPath = (path: string) => MODULE_ROUTES.find(route => route.path === path);
 export const rolePreviewPath = '/role-preview';
+export const rolePreviewModulePath = (route: ModuleRoute) => `${rolePreviewPath}/${route.roleSlug}/${route.slug}`;
+export const rolePreviewRouteForPath = (path: string) => {
+  const parts = path.split('/').filter(Boolean);
+  if (parts.length !== 3 || parts[0] !== 'role-preview') return undefined;
+  return MODULE_ROUTES.find(route => route.roleSlug === parts[1] && route.slug === parts[2]);
+};
 export const PUBLIC_ROUTES = {
   home: '/', search: '/search', registry: '/registry', map: '/map', request: '/request', plates: '/plates',
   stats: '/statistics', services: '/services', about: '/about', resources: '/resources', ussd: '/ussd',

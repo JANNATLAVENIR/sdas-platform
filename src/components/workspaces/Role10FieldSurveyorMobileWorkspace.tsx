@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 
 import type { Language } from '../../types/sdas';
+import { WorkspaceRouteContext } from '../../routing/WorkspaceRouteContext';
+import { MODULE_ROUTES, rolePath } from '../../routing/routeRegistry';
+import { ModuleWorkspaceView } from './ModuleWorkspaceView';
 
 interface Props {
   user: AuthUser;
@@ -43,6 +46,7 @@ interface OfflineObservation {
 const OFFLINE_STORAGE_KEY = 'sdas_field_offline_queue_v1';
 
 export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLogout, onBackToPublicPortal }) => {
+  const route = React.useContext(WorkspaceRouteContext);
   const [tab, setTab] = useState<'tasks' | 'capture' | 'offline' | 'synced'>('tasks');
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -67,6 +71,13 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
   const [accuracyMeters, setAccuracyMeters] = useState(1.1);
   const [photoRef, setPhotoRef] = useState('GNSS-CAM-2026-01.jpg');
   const [notice, setNotice] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const navigateTab = (next: 'tasks' | 'capture' | 'offline' | 'synced') => {
+    setTab(next);
+    const module = next === 'tasks' ? 'My Assigned Tasks' : next === 'capture' ? 'GPS Capture' : next === 'offline' ? 'Offline Records' : 'Submission History';
+    const path = rolePath('field_surveyor', module);
+    if (path !== '/') window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
 
   useEffect(() => {
     try {
@@ -101,6 +112,14 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
   useEffect(() => {
     loadTasks();
   }, [isOffline]);
+
+  useEffect(() => {
+    if (!route || route.role !== 'field_surveyor') return;
+    if (/capture|registration|observation|entrance/.test(route.slug)) setTab('capture');
+    else if (/offline|synchronization/.test(route.slug)) setTab('offline');
+    else if (/history/.test(route.slug)) setTab('synced');
+    else setTab('tasks');
+  }, [route]);
 
   const handleSaveObservation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,6 +194,8 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
     setAccuracyMeters(Number((0.7 + Math.random() * 0.8).toFixed(1)));
   };
 
+  if (route?.role === 'field_surveyor' && !route.implemented) return <ModuleWorkspaceView route={route} roleName="Field Surveyor" scope={user.assignedArea} />;
+
   return (
     <div className="min-h-screen bg-[#f4f6f9] flex flex-col items-center sm:py-6">
       {/* Mobile-First Viewport Frame */}
@@ -203,6 +224,8 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
             </button>
           </div>
         </header>
+
+        <div className="border-b border-slate-200 bg-white px-3 py-2"><div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">R10 modules · {route?.module || 'My Assigned Tasks'}</div><nav aria-label="Field survey modules" className="flex gap-1 overflow-x-auto">{MODULE_ROUTES.filter(item=>item.role==='field_surveyor').map(item=><button key={item.path} aria-current={item.path===route?.path?'page':undefined} onClick={()=>{window.history.pushState({},'',item.path);window.dispatchEvent(new PopStateEvent('popstate'));}} className={`shrink-0 rounded px-2 py-1 text-[10px] ${item.path===route?.path?'bg-[#0c243e] text-white':'bg-slate-100 text-slate-700'}`}>{item.module}</button>)}</nav></div>
 
         {/* Connectivity & Sync Status Strip */}
         <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs">
@@ -449,7 +472,7 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
         {/* Persistent Mobile Bottom Tab Bar */}
         <nav className="grid grid-cols-4 border-t border-slate-200 bg-white text-[11px]">
           <button
-            onClick={() => setTab('tasks')}
+            onClick={() => navigateTab('tasks')}
             className={`py-2.5 flex flex-col items-center gap-1 cursor-pointer ${
               tab === 'tasks' ? 'text-[#0c243e] font-bold bg-slate-50' : 'text-slate-500'
             }`}
@@ -458,7 +481,7 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
             <span>Tasks</span>
           </button>
           <button
-            onClick={() => setTab('capture')}
+            onClick={() => navigateTab('capture')}
             className={`py-2.5 flex flex-col items-center gap-1 cursor-pointer ${
               tab === 'capture' ? 'text-[#0c243e] font-bold bg-slate-50' : 'text-slate-500'
             }`}
@@ -467,7 +490,7 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
             <span>Capture</span>
           </button>
           <button
-            onClick={() => setTab('offline')}
+            onClick={() => navigateTab('offline')}
             className={`py-2.5 flex flex-col items-center gap-1 cursor-pointer ${
               tab === 'offline' ? 'text-[#0c243e] font-bold bg-slate-50' : 'text-slate-500'
             }`}
@@ -476,7 +499,7 @@ export const Role10FieldSurveyorMobileWorkspace: React.FC<Props> = ({ user, onLo
             <span>Offline ({offlineQueue.length})</span>
           </button>
           <button
-            onClick={() => setTab('synced')}
+            onClick={() => navigateTab('synced')}
             className={`py-2.5 flex flex-col items-center gap-1 cursor-pointer ${
               tab === 'synced' ? 'text-[#0c243e] font-bold bg-slate-50' : 'text-slate-500'
             }`}
