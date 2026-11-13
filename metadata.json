@@ -1,0 +1,6 @@
+{
+  "name": "SDAS - Somali Digital Addressing System",
+  "description": "Master Implementation Blueprint Version 3.0 Consolidated edition for the Mogadishu (Banaadir) deployment. National digital addressing platform owned by the Government of Somalia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
