@@ -4,6 +4,7 @@ import type { AuthUser } from '../../api/sdasClient';
 import { rolePath, routeForPath } from '../../routing/routeRegistry';
 import type { ModuleRoute } from '../../routing/routeRegistry';
 import { WorkspaceRouteContext } from '../../routing/WorkspaceRouteContext';
+import { ModuleWorkspaceView } from './ModuleWorkspaceView';
 
 export interface WorkspaceNavItem {
   id: string;
@@ -198,12 +199,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
         {/* Main Content Viewport */}
         <main className="lg:col-span-9 space-y-4 sm:space-y-5 min-w-0">
           {activeRoute && activeRoute.role === user.role && !activeRoute.implemented ? (
-            <section className="bg-white border border-slate-200 rounded-md p-6 sm:p-8" aria-labelledby="module-placeholder-title">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Module screen pending</p>
-              <h1 id="module-placeholder-title" className="mt-2 text-xl font-serif font-bold text-slate-900">{activeRoute.module}</h1>
-              <p className="mt-2 text-sm text-slate-600">{activeRoute.description}</p>
-              <p className="mt-4 text-xs text-slate-500">This route is registered, but its dedicated screen and interactions have not been implemented.</p>
-            </section>
+            <ModuleWorkspaceView route={activeRoute} roleName={roleTitle} scope={user.assignedArea} />
           ) : children}
         </main>
       </div>
