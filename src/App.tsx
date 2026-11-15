@@ -33,6 +33,7 @@ import { ArrowLeft } from 'lucide-react';
 import { MODULE_ROUTES, PUBLIC_ROUTES, publicRouteForPath, rolePath, rolePreviewPath, rolePreviewRouteForPath, rolePreviewModulePath, routeForPath } from './routing/routeRegistry';
 import { RolePreviewWorkspace } from './components/RolePreviewWorkspace';
 import { DemoRoleWorkspace } from './components/DemoRoleWorkspace';
+import { MobileHomePortalView, PublicMobileNavigation } from './components/MobilePublicPortal';
 
 type PortalView =
   | 'home'
@@ -227,8 +228,10 @@ export default function App() {
       )}
 
       {/* Main Content Body */}
-      <main className="flex-1">
+      <main className="flex-1 pb-20 sm:pb-0">
         {currentView === 'home' && (
+          <>
+          <div className="hidden sm:block">
           <HomePortalView
             language={language}
             activeRole={activeRole}
@@ -239,6 +242,9 @@ export default function App() {
             onOpenSignIn={() => setIsSignInOpen(true)}
             onOpenLatestUpdate={() => setIsLatestUpdateOpen(true)}
           />
+          </div>
+          <MobileHomePortalView language={language} onNavigate={handleNavigate} onQuickVerify={handleQuickVerify} />
+          </>
         )}
 
         {currentView === 'search' && (
@@ -308,6 +314,8 @@ export default function App() {
 
         {currentView === 'contact' && <ContactView />}
       </main>
+
+      <PublicMobileNavigation active={currentView} language={language} onNavigate={handleNavigate} />
 
       {/* Official Government Footer */}
       <PortalFooter language={language} onNavigate={handleNavigate} />
