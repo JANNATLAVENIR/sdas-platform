@@ -42,3 +42,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   outline: 2px solid #1565c0;
   outline-offset: 2px;
 }
+
+
+/* Citizen-facing mobile portal: calm, legible, touch-first. */
+@media (max-width: 639px) {
+  .sdas-mobile-home { padding-bottom: 1.5rem; }
+  .sdas-mobile-bottom-nav {
+    position: fixed;
+    z-index: 60;
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    min-height: 64px;
+    padding: 4px max(12px, env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: rgba(255,255,255,.98);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 18px rgba(15, 23, 42, .06);
+  }
+  .sdas-mobile-bottom-nav button[aria-current="page"] { font-weight: 700; }
+  .sdas-mobile-bottom-nav button:active { background: #f1f5f9; border-radius: 10px; }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+}
